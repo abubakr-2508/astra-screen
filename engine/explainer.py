@@ -7,7 +7,14 @@ explaining screening decisions to QA inspectors.
 import pandas as pd
 from typing import List, Dict, Any
 
-def generate_component_explanation(row: pd.Series) -> List[str]:
+from config import ROBUST_Z_SCORE_THRESHOLD, SAFETY_SLOPE_MARGIN_RATIO
+
+
+def generate_component_explanation(
+    row: pd.Series,
+    z_threshold: float = ROBUST_Z_SCORE_THRESHOLD,
+    safety_ratio: float = SAFETY_SLOPE_MARGIN_RATIO,
+) -> List[str]:
     """
     Generates plain-language reasons explaining why a component was assigned its risk status.
     """
@@ -30,10 +37,10 @@ def generate_component_explanation(row: pd.Series) -> List[str]:
         return reasons
 
     # Peer anomaly reasons
-    if abs(val_24h_z) >= 3.0:
+    if abs(val_24h_z) >= z_threshold:
         reasons.append(
             f"Peer Anomaly: 24h measurement ({val_24h} µA) is significantly above Lot {lot_id} median ({val_24h_med} µA) "
-            f"with a Robust Z-Score of {val_24h_z:+.2f} (Threshold = ±3.0)."
+            f"with a Robust Z-Score of {val_24h_z:+.2f} (Threshold = ±{z_threshold:.1f})."
         )
     elif row.get("IsoForest_Prediction") == "ANOMALY":
         reasons.append(f"Unsupervised Pattern Outlier: Multidimensional trajectory detected as anomalous relative to peer population.")
@@ -46,7 +53,8 @@ def generate_component_explanation(row: pd.Series) -> List[str]:
         )
     elif pred_168h >= safety_thresh:
         reasons.append(
-            f"Safety Margin Breach: Predicted 168h value ({pred_168h} µA) exceeds the 80% safety margin threshold ({safety_thresh} µA)."
+            f"Safety Margin Breach: Predicted 168h value ({pred_168h} µA) exceeds the "
+            f"{safety_ratio:.0%} safety margin threshold ({safety_thresh} µA)."
         )
         
     early_drift = round(val_24h - val_0h, 2)
@@ -55,7 +63,11 @@ def generate_component_explanation(row: pd.Series) -> List[str]:
         
     return reasons
 
-def attach_explanations_to_df(df: pd.DataFrame) -> pd.DataFrame:
+def attach_explanations_to_df(
+    df: pd.DataFrame,
+    z_threshold: float = ROBUST_Z_SCORE_THRESHOLD,
+    safety_ratio: float = SAFETY_SLOPE_MARGIN_RATIO,
+) -> pd.DataFrame:
     """
     Appends formatted explanation lists and summary strings to each row in DataFrame.
     """
@@ -64,7 +76,7 @@ def attach_explanations_to_df(df: pd.DataFrame) -> pd.DataFrame:
     explanation_texts = []
     
     for _, row in res_df.iterrows():
-        reasons = generate_component_explanation(row)
+        reasons = generate_component_explanation(row, z_threshold, safety_ratio)
         explanation_lists.append(reasons)
         explanation_texts.append(" | ".join(reasons))
         

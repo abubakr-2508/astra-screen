@@ -1,5 +1,8 @@
 __pycache__/
 *.pyc
 .DS_Store
-.streamlit/
 *.log
+
+# Working snapshots taken before scripted edits — local safety nets, not source.
+.bak_*/
+*.bak

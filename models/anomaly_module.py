@@ -8,7 +8,10 @@ from models.robust_stats import compute_lot_robust_stats
 from models.isolation_forest import train_run_isolation_forest
 from config import ROBUST_Z_SCORE_THRESHOLD
 
-def run_anomaly_module_a(df: pd.DataFrame) -> pd.DataFrame:
+def run_anomaly_module_a(
+    df: pd.DataFrame,
+    z_threshold: float = ROBUST_Z_SCORE_THRESHOLD,
+) -> pd.DataFrame:
     """
     Executes Module A dynamic anomaly detection pipeline on the input DataFrame.
     """
@@ -23,8 +26,8 @@ def run_anomaly_module_a(df: pd.DataFrame) -> pd.DataFrame:
     # A component is flagged as a peer anomaly if:
     # 1. Robust Z-score > ROBUST_Z_SCORE_THRESHOLD at 24h OR 0h
     # OR 2. Isolation Forest marks it as ANOMALY
-    z_flag = (res_df["Value_24h_Robust_Z"].abs() >= ROBUST_Z_SCORE_THRESHOLD) | \
-             (res_df["Value_0h_Robust_Z"].abs() >= ROBUST_Z_SCORE_THRESHOLD)
+    z_flag = (res_df["Value_24h_Robust_Z"].abs() >= z_threshold) | \
+             (res_df["Value_0h_Robust_Z"].abs() >= z_threshold)
              
     iso_flag = (res_df["IsoForest_Prediction"] == "ANOMALY")
     

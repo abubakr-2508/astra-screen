@@ -1,0 +1,54 @@
+# Burn-In Screening Console — theme
+#
+# Both schemes are designed deliberately; the app follows the viewer's system setting.
+# Colour policy: neutral surfaces, saturated colour reserved for alarm states only.
+# Green is intentionally absent — PASS is the absence of alarm, not a colour.
+#
+# Every value below is contrast-checked against its own ground (all >= 6:1 for text).
+# The light accent cannot be reused on dark: #18566E on #1A1D21 is 2.09:1, unusable.
+# Hence separate accents per scheme.
+#
+# NOTE: Streamlit exposes no theme CSS custom properties, so injected CSS in app.py
+# must NOT hardcode text colours — it cannot follow the theme. Let text inherit.
+
+[theme]
+# Shared across both schemes. `base` is NOT valid inside [theme.light] /
+# [theme.dark] — Streamlit warns and ignores it. The sub-sections define the
+# palettes; Streamlit picks between them from the viewer's system setting.
+baseRadius = "6px"          # containers; 2px read as severe rather than refined
+buttonRadius = "4px"        # inputs stay tighter than cards
+showWidgetBorder = true
+showSidebarBorder = true
+
+[theme.light]
+primaryColor = "#18566E"              # deep petrol — sliders, tabs, chips. Never red.
+backgroundColor = "#F7F8FA"           # NOT pure white: a white card on a white
+                                      # page gives a shadow nothing to lift against
+secondaryBackgroundColor = "#F2F4F6"  # sidebar, widget fills
+dataframeHeaderBackgroundColor = "#EDF0F3"
+textColor = "#14181D"
+borderColor = "#DDE2E6"
+# Neutralise Streamlit's built-in green so st.success stops painting "PASS" as
+# an achievement. Safe is the absence of alarm, not a colour of its own — this
+# also removes the red/green pair that fails for colour-blind viewers.
+greenColor = "#5A646E"
+greenTextColor = "#5A646E"
+greenBackgroundColor = "#F2F4F6"
+
+[theme.dark]
+primaryColor = "#6FB3CE"              # lightened petrol — 7.26:1 on the dark ground
+backgroundColor = "#1A1D21"           # soft near-black, never #000 (halation)
+secondaryBackgroundColor = "#20242A"  # sidebar — one step above the page,
+                                      # one below a raised card (#262B32)
+dataframeHeaderBackgroundColor = "#242930"
+textColor = "#E3E6E9"                 # off-white, not pure white
+borderColor = "#313840"
+greenColor = "#98A2AC"                # green neutralised here too — see [theme.light]
+greenTextColor = "#98A2AC"
+greenBackgroundColor = "#22262B"
+
+[client]
+toolbarMode = "minimal"
+
+[browser]
+gatherUsageStats = false

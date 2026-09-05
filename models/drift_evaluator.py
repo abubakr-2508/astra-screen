@@ -9,7 +9,10 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from typing import Dict, Any
 from config import SAFETY_SLOPE_MARGIN_RATIO
 
-def evaluate_drift_and_safety(df: pd.DataFrame) -> pd.DataFrame:
+def evaluate_drift_and_safety(
+    df: pd.DataFrame,
+    safety_ratio: float = SAFETY_SLOPE_MARGIN_RATIO,
+) -> pd.DataFrame:
     """
     Evaluates predicted 168h value against safety slope criteria.
     
@@ -17,7 +20,7 @@ def evaluate_drift_and_safety(df: pd.DataFrame) -> pd.DataFrame:
     """
     res_df = df.copy()
     
-    safety_threshold = res_df["Datasheet_Limit"] * SAFETY_SLOPE_MARGIN_RATIO
+    safety_threshold = res_df["Datasheet_Limit"] * safety_ratio
     res_df["Safety_Threshold_168h"] = safety_threshold.round(2)
     
     # Flag predicted breaches

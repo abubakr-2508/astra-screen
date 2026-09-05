@@ -6,9 +6,12 @@ into final QA Screening Decisions: PASS, REVIEW, or FLAG (HIGH RISK).
 
 import pandas as pd
 import numpy as np
-from config import RISK_PASS, RISK_REVIEW, RISK_FLAG
+from config import RISK_PASS, RISK_REVIEW, RISK_FLAG, ROBUST_Z_SCORE_THRESHOLD
 
-def evaluate_composite_risk(df: pd.DataFrame) -> pd.DataFrame:
+def evaluate_composite_risk(
+    df: pd.DataFrame,
+    z_threshold: float = ROBUST_Z_SCORE_THRESHOLD,
+) -> pd.DataFrame:
     """
     Evaluates composite risk score and assigns screening status.
     
@@ -51,9 +54,12 @@ def evaluate_composite_risk(df: pd.DataFrame) -> pd.DataFrame:
         risk_scores.append(score)
         
         # Assign Category
-        if mod_b_datasheet_flag or (mod_b_safety_flag and mod_a_flag) or max_z >= 4.0:
+        # Thresholds follow the operator setting rather than literals. The
+        # "extreme peer deviation" bar sits one sigma above the review bar,
+        # which reproduces the original 4.0 / 3.0 pair at the default of 3.0.
+        if mod_b_datasheet_flag or (mod_b_safety_flag and mod_a_flag) or max_z >= z_threshold + 1.0:
             status = RISK_FLAG
-        elif mod_a_flag or mod_b_safety_flag or max_z >= 3.0:
+        elif mod_a_flag or mod_b_safety_flag or max_z >= z_threshold:
             status = RISK_REVIEW
         else:
             status = RISK_PASS

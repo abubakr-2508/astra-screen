@@ -51,7 +51,9 @@ class TestBurnInScreeningPipeline(unittest.TestCase):
         self.assertIn("Predicted_Value_168h", df_pred.columns)
 
     def test_06_end_to_end_pipeline(self):
-        processed_df, summary = run_full_screening_pipeline(self.df_synthetic, dataset_name="Test Run")
+        processed_df, summary = run_full_screening_pipeline(
+            self.df_synthetic, dataset_name="Test Run", log_run=False
+        )  # log_run=False: a unit test must not append to the tracked audit trail
         self.assertEqual(len(processed_df), 60)
         self.assertIn("Screening_Status", processed_df.columns)
         self.assertIn("Explanation_Summary", processed_df.columns)

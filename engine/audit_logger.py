@@ -17,10 +17,16 @@ def log_screening_run(
     flagged_count: int,
     review_count: int,
     pass_count: int,
-    metrics: Dict[str, Any]
+    metrics: Dict[str, Any],
+    z_threshold: float = ROBUST_Z_SCORE_THRESHOLD,
+    safety_ratio: float = SAFETY_SLOPE_MARGIN_RATIO,
 ) -> Dict[str, Any]:
     """
     Appends an immutable audit log entry for a screening execution.
+
+    The thresholds MUST be passed in as the values the run actually used.
+    Reading the config constants here would certify the defaults even when the
+    operator screened at a different setting — the record would be a lie.
     """
     audit_entry = {
         "timestamp": datetime.datetime.now().isoformat(),
@@ -32,8 +38,8 @@ def log_screening_run(
             "FLAG": flagged_count
         },
         "configured_thresholds": {
-            "robust_z_score_threshold": ROBUST_Z_SCORE_THRESHOLD,
-            "safety_margin_ratio": SAFETY_SLOPE_MARGIN_RATIO
+            "robust_z_score_threshold": z_threshold,
+            "safety_margin_ratio": safety_ratio
         },
         "model_performance_metrics": metrics
     }

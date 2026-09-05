@@ -1,5 +1,14 @@
-streamlit>=1.30.0
-pandas>=2.0.0
-numpy>=1.24.0
-scikit-learn>=1.2.0
-plotly>=5.15.0
+# Verified working set (2026-09-05): Python 3.11.6, Streamlit 1.63.0,
+# Plotly 7.0.0, pandas 3.0.5, NumPy 2.x, scikit-learn 1.9.0.
+#
+# The old floor of streamlit>=1.30 was wrong and would fail at runtime. The UI
+# depends on APIs that release does not have — measured against 1.37.1, which
+# is missing st.context.theme, the [theme.light] / [theme.dark] config
+# sections, baseRadius / buttonRadius / showWidgetBorder, the semantic
+# green* overrides, width="stretch" on st.plotly_chart, and icon= on
+# st.button. On that version the app crashes or silently loses its theming.
+streamlit>=1.63,<2
+plotly>=7.0,<8
+pandas>=2.2
+numpy>=1.24
+scikit-learn>=1.2
