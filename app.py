@@ -268,13 +268,25 @@ st.markdown("""
            figures so digits align down the column. Replaces ragged
            st.write("**Label**: value") pairs. --- */
     .spec {
+        position: relative;
         display: flex;
         justify-content: space-between;
         align-items: baseline;
         gap: 1.2rem;
         padding: 6px 0;
-        border-bottom: 1px solid currentColor;
-        border-color: color-mix(in srgb, currentColor 10%, transparent);
+    }
+    /* The divider fades toward the value column instead of ruling the row
+       edge to edge. Absolutely positioned rather than a border-image because
+       `.spec` is a flex container — an in-flow pseudo-element would become a
+       flex item and land between the label and its value. */
+    .spec::after {
+        content: "";
+        position: absolute;
+        left: 0; right: 0; bottom: 0;
+        height: 1px;
+        background: linear-gradient(to right,
+                    color-mix(in srgb, currentColor 16%, transparent),
+                    transparent);
     }
     .spec .k {
         font-size: 0.68rem;
@@ -339,14 +351,73 @@ st.markdown(f"<style>{css_vars()}</style>", unsafe_allow_html=True)
 # exactly why the cards read as hollow rather than raised.
 st.markdown("""
 <style>
-    [data-testid="stMetric"],
+    /* `.card` styles exactly one element, the verdict card, and that card is a
+       READOUT — nothing about it is clickable. It previously also carried a
+       `transition: box-shadow, border-color` with no `:hover` rule anywhere to
+       fire it, and a `[data-testid="stMetric"]` selector that matches nothing
+       (st.metric is never called). Both are gone: hover feedback on a display
+       element is decoration impersonating an affordance, which is the exact
+       thing this UI is being stripped of. State goes on the buttons below. */
     .card {
         background: var(--astra-raised);
         border: 1px solid var(--astra-rule);
         border-radius: var(--astra-radius);
         box-shadow: var(--astra-elevation), var(--astra-highlight);
         padding: 1rem 1.15rem;
-        transition: box-shadow var(--astra-motion), border-color var(--astra-motion);
+    }
+
+    /* Buttons are the only surface here a cursor can act on, so they are the
+       only place a hover state belongs. Measured before this: background
+       #252A31, border #313840, box-shadow none, and `transition: all` with no
+       duration — every change instantaneous.
+
+       The border carries the signal, not the background: rest and raised
+       differ by #252A31 vs #262B32, which is invisible. Accent against the
+       sidebar ground measures ~7.4:1 light and ~7:1 dark, well past the 3:1
+       floor for a graphical object. On press the lift collapses, which is
+       what makes a button feel like a button. */
+    [data-testid="stBaseButton-secondary"] {
+        transition: border-color var(--astra-motion),
+                    box-shadow var(--astra-motion),
+                    transform var(--astra-motion);
+    }
+    [data-testid="stBaseButton-secondary"]:hover {
+        border-color: var(--astra-accent);
+        box-shadow: var(--astra-elevation);
+    }
+    [data-testid="stBaseButton-secondary"]:active {
+        box-shadow: none;
+        transform: translateY(1px);
+    }
+
+    /* st.caption renders at FULL INK in 1.63 — 16.77:1 light, 13.50:1 dark,
+       byte-identical to body text — so five sections of explanatory text
+       carried the same weight as the content they are subordinate to.
+       Nothing in Streamlit's own stylesheet sets that colour, so one rule
+       cascades cleanly to the inner <p>. Lands at 6.03:1 / 5.49:1. */
+    [data-testid="stCaptionContainer"] { color: var(--astra-muted); }
+
+    /* The download / fullscreen / search cluster sits at opacity 0 with
+       `transition: none`, so it snaps into existence the instant the cursor
+       crosses a chart or table edge. */
+    [data-testid="stElementToolbar"] { transition: opacity var(--astra-motion); }
+
+    /* Sidebar section rules, drawn with ZERO added height. The sidebar holds
+       683px of content in 720px on a small laptop — 37px of slack — and four
+       labels with 8px of breathing room each would spend 32px of it and
+       re-open the overlap fixed in Step 14. The hairline is positioned inside
+       the gap that already exists (1.6px label margin + 8px flex gap). It
+       fades out to the right so it reads as a section break, not a table rule.
+       Not applied to the first label, which needs no rule above it. */
+    [data-testid="stSidebar"] .card-label.sec { position: relative; }
+    [data-testid="stSidebar"] .card-label.sec::before {
+        content: "";
+        position: absolute;
+        left: 0; right: 0; top: -5px;
+        height: 1px;
+        background: linear-gradient(to right,
+                    color-mix(in srgb, currentColor 22%, transparent),
+                    transparent);
     }
 </style>
 """, unsafe_allow_html=True)
@@ -373,7 +444,7 @@ data_source_opt = st.sidebar.radio(
 )
 _slot_upload = st.sidebar.container()
 
-st.sidebar.markdown('<div class="card-label">Screening configuration</div>', unsafe_allow_html=True)
+st.sidebar.markdown('<div class="card-label sec">Screening configuration</div>', unsafe_allow_html=True)
 z_thresh = st.sidebar.slider("Peer anomaly threshold |Z|", 1.5, 5.0,
                              float(ROBUST_Z_SCORE_THRESHOLD), 0.1,
                              help="Robust median/MAD Z against the part's own lot. "
@@ -667,10 +738,10 @@ _legend_html = "".join(
 # 110px around 126px of content, and flex-shrink guards on the anonymous
 # wrapper divs did not fix it reliably. One block removes the boundary.
 _slot_context.markdown(
-    '<div class="card-label">Lots'
+    '<div class="card-label sec">Lots'
     '<span class="lbl-hint">flagged / screened</span></div>'
     f'<div class="lots">{_rows}</div>'
-    '<div class="card-label ctx-gap">Decisions</div>'
+    '<div class="card-label ctx-gap sec">Decisions</div>'
     f'<div class="lgd-list">{_legend_html}</div>',
     unsafe_allow_html=True,
 )
