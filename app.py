@@ -239,14 +239,30 @@ st.markdown("""
     .vnum.calm { color: inherit; opacity: 0.55; }   /* zero is never an alarm */
     .vtxt { font-size: 1.05rem; line-height: 1.35; padding-top: 0.35rem; }
     .vsub .unit { text-transform: none; }
+    /* These four counts are the ONLY things that move when the operator
+       changes a threshold, and they were the quietest marks on the card:
+       0.66rem at opacity .62 measured 4.98:1 (light) / 5.35:1 (dark) against
+       the card, below the headline's own 6.54:1 at five times the size. The
+       app was responding and the response was styled into a footnote.
+
+       Colour, not opacity, carries the hierarchy now — `opacity` on this
+       element would cap every child, so raising the numerals inside it is
+       impossible while it is set. Labels sit at muted (6.03:1 / 5.49:1),
+       the numerals at full ink (17.82:1 / 11.37:1). Both theme-aware. */
     .vsub {
         font-family: ui-monospace, "Cascadia Mono", Consolas, "SF Mono", monospace;
         text-transform: uppercase;
         font-size: 0.66rem;
         letter-spacing: 0.08em;
-        opacity: 0.62;
+        color: var(--astra-muted);
         margin-top: 0.5rem;
         line-height: 1.7;
+    }
+    .vsub .n {
+        color: var(--astra-ink);
+        font-weight: 700;
+        font-size: 0.78rem;
+        font-variant-numeric: tabular-nums;
     }
     /* --- spec-sheet rows: label left, value right in mono with tabular
            figures so digits align down the column. Replaces ragged
@@ -663,10 +679,11 @@ st.markdown(
     f'<div class="verdict card">'
     f'<div class="vnum{calm}">{counts["FLAG"]}</div>'
     f'<div class="vtxt">of {total_count} components held back from release'
-    f'<div class="vsub">{breach} PREDICTED TO BREACH <span class="unit">{limit_txt}</span> BY 168&#8201;H'
-    f' &nbsp;·&nbsp; {offbase} OFF-BASELINE VS THEIR LOT'
-    f' &nbsp;·&nbsp; {counts["REVIEW"]} FOR REVIEW'
-    f' &nbsp;·&nbsp; {counts["PASS"]} CLEAR</div></div></div>',
+    f'<div class="vsub"><span class="n">{breach}</span> PREDICTED TO BREACH '
+    f'<span class="unit">{limit_txt}</span> BY 168&#8201;H'
+    f' &nbsp;·&nbsp; <span class="n">{offbase}</span> OFF-BASELINE VS THEIR LOT'
+    f' &nbsp;·&nbsp; <span class="n">{counts["REVIEW"]}</span> FOR REVIEW'
+    f' &nbsp;·&nbsp; <span class="n">{counts["PASS"]}</span> CLEAR</div></div></div>',
     unsafe_allow_html=True
 )
 
