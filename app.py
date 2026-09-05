@@ -376,10 +376,14 @@ st.markdown("""
        sidebar ground measures ~7.4:1 light and ~7:1 dark, well past the 3:1
        floor for a graphical object. On press the lift collapses, which is
        what makes a button feel like a button. */
+    /* `transform` is deliberately NOT in this transition list. Measured with
+       the press sampled frame by frame: with a 120ms ramp the button had not
+       moved at all at mousedown, so a normal quick click never showed the
+       travel — a press has to answer instantly or it reads as lag. Hover and
+       release still ease; the 1px depression does not. */
     [data-testid="stBaseButton-secondary"] {
         transition: border-color var(--astra-motion),
-                    box-shadow var(--astra-motion),
-                    transform var(--astra-motion);
+                    box-shadow var(--astra-motion);
     }
     [data-testid="stBaseButton-secondary"]:hover {
         border-color: var(--astra-accent);
