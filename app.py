@@ -609,14 +609,32 @@ st.markdown("""
 # would break. components.v1.html is therefore the correct call here, and it
 # only runs on an actual toggle — not on every rerun — so the deprecation
 # notice appears once per theme switch rather than filling the terminal.
-_THEME_KEY = "stActiveTheme-/-v2"
+# The key is NOT a constant. Streamlit's frontend builds it as
+#     `stActiveTheme-${window.location.pathname}-v${2}`
+# so it is only "stActiveTheme-/-v2" when the app is served from the root. A
+# hardcoded "/" worked locally and silently failed on Streamlit Community
+# Cloud: the write succeeded against a key nothing reads, the reload ran, and
+# the theme came back as it was. (That the page reloaded at all is what rules
+# out a cross-origin block — a SecurityError on setItem would have thrown
+# before reload() was reached.) Deriving it from the parent's own pathname is
+# correct wherever the app is mounted.
+_THEME_VERSION = 2
 
 _pending = st.session_state.pop("_theme_apply", None)
 if _pending:
     components.html(
         f"""<script>
               const w = window.parent;
-              w.localStorage.setItem({_THEME_KEY!r}, JSON.stringify({_pending!r}));
+              try {{
+                /* Reading w.location.pathname is itself a cross-origin access,
+                   so it lives inside the try alongside the write — otherwise a
+                   throw here would skip the reload and strand the toggle. */
+                const key = "stActiveTheme-" + w.location.pathname
+                            + "-v{_THEME_VERSION}";
+                w.localStorage.setItem(key, JSON.stringify({_pending!r}));
+              }} catch (e) {{
+                /* Nothing useful to do, but the reload must still happen. */
+              }}
               w.location.reload();
             </script>""",
         height=0,
