@@ -77,39 +77,35 @@ st.markdown("""
 
     /* --- the masthead band ---
        A header has to be a SURFACE, not text that happens to sit at the top.
-       It takes the same ground as the sidebar, so every piece of chrome in the
-       app is one material and the content sits on a different one. Pulled out
-       by the gutter on both sides and up by the container's own top padding,
-       so it spans the full width of the main area and starts flush at the top;
-       the padding puts its contents back exactly where they were. */
+
+       It was previously pulled out by the gutter to span the whole main area.
+       That looked different at different zoom levels, which is worse than
+       either state: the block container is capped at max-width 1700px, so
+       above ~1700px of main area it centres and the band floats clear of the
+       sidebar, while below it the container fills and the band butts straight
+       into the sidebar with no separation — two panels stuck together. It now
+       aligns to the content column like every other element, so the gap to the
+       sidebar is the same at any width or zoom.
+
+       Raised, not surface-2: matching the sidebar's ground measured 1.04:1
+       against the page in light, a step that exists arithmetically and not
+       perceptually, so the band did not read as a band at all. Raised runs the
+       other way — lighter than the page in light, a clear step up in dark —
+       and the elevation token does the separating. */
     .st-key-masthead {
-        /* Raised, not surface-2. Matching the sidebar's ground measured 1.04:1
-           against the page in light — a step that exists arithmetically and not
-           perceptually, so the band simply did not read as a band. Raised runs
-           the other way: lighter than the page in light, a clear step up from it
-           in dark, which is what an elevated bar looks like in both. The
-           elevation token then does the separating, the way a real app header
-           casts onto the content beneath it rather than relying on hue. */
         background: var(--astra-raised);
-        box-shadow: var(--astra-elevation);
-        border-bottom: 1px solid var(--astra-rule);
-        margin: -1.75rem calc(-1 * var(--gut)) 1.5rem;
-        padding: 1.75rem var(--gut) 0;
-        /* Negative margins alone are not enough here. Streamlit gives the block
-           `width: 100%; max-width: 100%` and `flex: 1 1 0%`, so the negative
-           margins shifted the band left without widening it — it started in the
-           right place and stopped 160px short. The width has to be reclaimed
-           explicitly, and the flex basis released, or the basis wins. */
-        flex: 0 0 auto;
-        width: calc(100% + 2 * var(--gut));
-        max-width: none;
+        box-shadow: var(--astra-elevation), var(--astra-highlight);
+        border: 1px solid var(--astra-rule);
+        border-radius: var(--astra-radius);
+        margin-bottom: 1.5rem;
+        padding: 1.15rem 1.35rem 0;
     }
     /* Streamlit sets `margin-bottom: -16px` on stMarkdownContainer to cancel a
        trailing <p>'s own margin. The rows in this band are divs with their own
        padding, so there is no <p> margin to cancel and the negative one simply
        made the wrapper measure 16px shorter than its contents: the wrapper
        reported 31px around 47px, the band sized to the wrapper, and the run
-       state overflowed 15px past the band's own bottom rule — the border cut
+       state overflowed 15px past the band's own bottom edge — the border cut
        through the text. Cancelled inside the masthead only; elsewhere the
        compensation is doing its job. */
     .st-key-masthead [data-testid="stMarkdownContainer"] { margin-bottom: 0; }
@@ -252,12 +248,12 @@ st.markdown("""
         letter-spacing: 0.10em;
         text-transform: uppercase;
         opacity: 0.60;
-        padding: 9px 0 11px;
-        /* Inside the band now, so this rule separates identity from run state
+        padding: 9px 0 0;
+        /* Inside the band, so this rule separates identity from run state
            rather than closing anything — the band's own border does that. */
         border-top: 1px solid currentColor;
         border-color: color-mix(in srgb, currentColor 14%, transparent);
-        margin: 0.55rem 0 0;
+        margin: 0.55rem 0 1.05rem;
     }
     .provenance .hint { opacity: 0.65; letter-spacing: 0.04em; }
     .provenance .unit { text-transform: none; }
