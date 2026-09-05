@@ -84,13 +84,22 @@ st.markdown("""
     .lockup-head .mark { flex: none; display: block; border-radius: var(--astra-radius); }
     .lockup-txt { min-width: 0; }
 
+    /* A wordmark, not a heading. At 2.2rem/-0.022em this was the same species
+       as the section h3s (1.75rem) and only 1.26x their size, which is why it
+       read as "the biggest heading" instead of "the application". Tighter
+       tracking is what makes type read as a mark; the h3s drop further below,
+       taking the ratio to 1.63x. */
     .main-header {
-        font-size: 2.2rem;
+        font-size: 1.9rem;
         font-weight: 700;
-        letter-spacing: -0.022em;
+        letter-spacing: -0.030em;
         line-height: 1.1;
         margin-bottom: 0.15rem;
     }
+
+    /* Section headings were h3 at 1.75rem — near enough to the product name to
+       compete with it. */
+    [data-testid="stHeading"] h3 { font-size: 1.35rem; letter-spacing: -0.01em; }
 
     /* --- small uppercase label: gives real hierarchy under an st.subheader.
            Replaces four "### <emoji> Heading" blocks that rendered as h3 and
@@ -132,13 +141,31 @@ st.markdown("""
         color: var(--astra-ink);
         font-weight: 700;
     }
+    /* MEASURED: the tablist had `border-bottom: 0px none` and every tab had
+       `padding: 0`, so the active indicator floated in empty space and the five
+       labels were words in a row, not tabs. A tab reads as a tab because its
+       indicator BREAKS a rule that runs the width of the bar — so the bar gets
+       the rule, and the tab is pulled down 1px to sit on it. */
+    [role="tablist"] {
+        border-bottom: 1px solid var(--astra-rule);
+        gap: 2px;
+    }
+    [role="tab"] {
+        padding: 0 14px;
+        margin-bottom: -1px;
+        border-radius: var(--astra-radius) var(--astra-radius) 0 0;
+        transition: background var(--astra-motion);
+    }
+    [role="tab"]:hover { background: var(--astra-surface-2); }
     /* The accent lives in the underline: strongest text + the only colour in
        the bar both land on the selected tab. */
     [role="tab"][aria-selected="true"] {
+        background: var(--astra-raised);
         box-shadow: inset 0 -2px 0 0 var(--astra-accent);
     }
+    [data-testid="stTabPanel"] { padding-top: 0.85rem; }
     .sub-header {
-        font-size: 1.0rem;
+        font-size: 0.9rem;
         opacity: 0.62;
         max-width: 78ch;
         margin-bottom: 0;
@@ -157,14 +184,33 @@ st.markdown("""
         letter-spacing: 0.10em;
         text-transform: uppercase;
         opacity: 0.60;
-        padding: 7px 0;
-        border-top: 1px solid currentColor;
+        padding: 7px 0 9px;
+        /* Only a bottom rule. With a border above as well the strip read as a
+           separate band floating under the title; with one rule beneath, the
+           lockup and the run state close as a single masthead. */
         border-bottom: 1px solid currentColor;
         border-color: color-mix(in srgb, currentColor 16%, transparent);
-        margin-bottom: 0.9rem;
+        margin-bottom: 1.35rem;
     }
     .provenance .hint { opacity: 0.65; letter-spacing: 0.04em; }
     .provenance .unit { text-transform: none; }
+
+    /* Closing note. Replaces a centred repeat of the product name, which the
+       masthead subtitle already ends with. */
+    .footer-note {
+        margin-top: 2.2rem;
+        padding-top: 0.85rem;
+        border-top: 1px solid currentColor;
+        border-color: color-mix(in srgb, currentColor 12%, transparent);
+        font-family: ui-monospace, "Cascadia Mono", Consolas, "SF Mono", monospace;
+        font-size: 0.66rem;
+        letter-spacing: 0.06em;
+        /* Measured at opacity .55 this came out 3.90:1 — a real AA failure for
+           text this size. The muted token is the app's established secondary
+           tier and lands at 5.67:1 / 5.49:1, so it is used here rather than a
+           hand-picked opacity. */
+        color: var(--astra-muted);
+    }
 
     /* --- sidebar: tighter rhythm. 223px of the 689px sidebar was Streamlit's
            default block gap — nearly a third of the column spent on air. --- */
@@ -406,6 +452,53 @@ st.markdown("""
        crosses a chart or table edge. */
     [data-testid="stElementToolbar"] { transition: opacity var(--astra-motion); }
 
+    /* ONE label system. Eight widget labels rendered in Source Sans 14px
+       sentence case ("Status", "Lot", "Search component", "Peer anomaly
+       threshold |Z|") while every label we authored is mono uppercase at
+       0.70rem — two typographic voices on the same screen, which is most of
+       why it still read as a document with widgets dropped into it. Measured
+       after: "PEER ANOMALY THRESHOLD |Z|" stays on one 24px line, so the
+       sidebar height is unchanged. */
+    [data-testid="stWidgetLabel"] p {
+        font-family: ui-monospace, "Cascadia Mono", Consolas, "SF Mono", monospace;
+        font-size: 0.70rem;
+        font-weight: 600;
+        letter-spacing: 0.11em;
+        text-transform: uppercase;
+        opacity: 0.60;
+    }
+
+    /* The sidebar opened with 78px of nothing above DATASET. stSidebarHeader is
+       a 260x60 band that already exists there, holding only a logo spacer and
+       the collapse button — so the title costs ZERO content height, which the
+       sidebar cannot spare (683px of content in 720px on a small laptop).
+       `margin-right: auto` keeps the collapse button at the right edge. */
+    [data-testid="stSidebarHeader"] { display: flex; align-items: center; }
+    [data-testid="stSidebarHeader"]::before {
+        content: "RUN CONTROL";
+        font-family: ui-monospace, "Cascadia Mono", Consolas, "SF Mono", monospace;
+        font-size: 0.70rem;
+        font-weight: 600;
+        letter-spacing: 0.11em;
+        text-transform: uppercase;
+        opacity: 0.60;
+        margin-right: auto;
+    }
+
+    /* The theme toggle is chrome, not a form control, so it loses the button
+       shell at rest and only shows a surface when the cursor is on it. Scoped
+       by the `st-key-` class the frontend emits for keyed widgets, so the other
+       three buttons keep their normal treatment. */
+    .st-key-theme_toggle [data-testid="stBaseButton-secondary"] {
+        background: transparent;
+        border-color: transparent;
+    }
+    .st-key-theme_toggle [data-testid="stBaseButton-secondary"]:hover {
+        background: var(--astra-surface-2);
+        border-color: var(--astra-rule);
+        box-shadow: none;
+    }
+
     /* Sidebar section rules, drawn with ZERO added height. The sidebar holds
        683px of content in 720px on a small laptop — 37px of slack — and four
        labels with 8px of breathing room each would spend 32px of it and
@@ -426,53 +519,9 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Header Section
-st.markdown(
-    lockup(
-        "Astra Screen",
-        "Component burn-in screening &middot; peer-relative anomaly detection "
-        "&amp; 168&#8201;h drift prediction &middot; ISRO PS-26170",
-    ),
-    unsafe_allow_html=True,
-)
-
-# Sidebar Configuration.
-# No brand lockup here: the header lockup (Step 11) already identifies the app,
-# and repeating the name ~40px away was duplication that also cost the context
-# blocks their headroom.
-# Dataset is the primary INPUT, so it leads. It previously rendered last, below
-# the theme toggle — a cosmetic preference above the main input.
-st.sidebar.markdown('<div class="card-label">Dataset</div>', unsafe_allow_html=True)
-data_source_opt = st.sidebar.radio(
-    "Source", ["ISRO benchmark sample", "Upload CSV"], label_visibility="collapsed"
-)
-_slot_upload = st.sidebar.container()
-
-st.sidebar.markdown('<div class="card-label sec">Screening configuration</div>', unsafe_allow_html=True)
-z_thresh = st.sidebar.slider("Peer anomaly threshold |Z|", 1.5, 5.0,
-                             float(ROBUST_Z_SCORE_THRESHOLD), 0.1,
-                             help="Robust median/MAD Z against the part's own lot. "
-                                  "REVIEW at |Z| >= this; FLAG at |Z| >= this + 1.")
-safety_ratio = st.sidebar.slider("Safety margin (% of limit)", 50, 95,
-                                 int(SAFETY_SLOPE_MARGIN_RATIO * 100), 5) / 100.0
-
-# Filled after the pipeline runs — containers hold their position in the
-# sidebar regardless of when they are written to.
-# ONE slot for both context blocks. Two adjacent st.markdown containers let
-# the second ride 6px up into the first: Streamlit's markdown wrapper reported
-# 110px around 126px of content, and no amount of flex-shrink guarding on the
-# anonymous wrapper divs fixed it reliably. Rendering both blocks in a single
-# markdown call removes the boundary rather than fighting it.
-_slot_context = st.sidebar.container()
-
-sign_off = st.sidebar.button(
-    "Commit run to audit trail", width="stretch",
-    help="Records this run with the thresholds above. Screening objective is to "
-         "minimise false negatives: a defective component released to flight is "
-         "far costlier than a good one held back.",
-)
-
-# --- Theme control ---------------------------------------------------------
+# --- Theme state -----------------------------------------------------------
+# Lifted above the header because the toggle now lives IN the header: a
+# masthead needs something on its right, or it stays a block of text.
 # Streamlit has no theme-setting API, but it persists the active choice in
 # localStorage under 'stActiveTheme-/-v2' ("System" | "Light" | "Dark") and
 # honours it on load. Writing that key drives Streamlit's REAL theme system,
@@ -512,11 +561,69 @@ _target = "Light" if _dark_now else "Dark"
 # Material icon rather than a text-only label: a sun/moon reads instantly and
 # is a proper icon font, not emoji.
 _icon = ":material/light_mode:" if _dark_now else ":material/dark_mode:"
-if st.sidebar.button(f"{_target} theme", icon=_icon, width="stretch",
-                     help=f"Switch to the {_target.lower()} theme. "
-                          "Defaults to following your system setting."):
-    st.session_state["_theme_apply"] = _target
-    st.rerun()
+
+# Header — a MASTHEAD, not a heading. The title measured 2.2rem against 1.75rem
+# section headings: same family, same weight, 1.26x apart, so it read as "the
+# biggest heading on the page" rather than "the application". It is now tighter
+# and smaller while the headings shrink further, and the row carries chrome on
+# the right, closed by the provenance rule below.
+_h_left, _h_right = st.columns([5, 1], vertical_alignment="center")
+with _h_left:
+    st.markdown(
+        lockup(
+            "Astra Screen",
+            "Component burn-in screening &middot; peer-relative anomaly detection "
+            "&amp; 168&#8201;h drift prediction &middot; ISRO PS-26170",
+        ),
+        unsafe_allow_html=True,
+    )
+with _h_right:
+    # key= gives the container an `st-key-theme_toggle` class (emitted by the
+    # frontend, verified in the 1.63 bundle), which is how the CSS below strips
+    # this one button back to chrome without touching the other three.
+    if st.button(f"{_target} theme", icon=_icon, width="stretch",
+                 key="theme_toggle",
+                 help=f"Switch to the {_target.lower()} theme. "
+                      "Defaults to following your system setting."):
+        st.session_state["_theme_apply"] = _target
+        st.rerun()
+
+# Sidebar Configuration.
+# No brand lockup here: the header lockup (Step 11) already identifies the app,
+# and repeating the name ~40px away was duplication that also cost the context
+# blocks their headroom.
+# Dataset is the primary INPUT, so it leads. It previously rendered last, below
+# the theme toggle — a cosmetic preference above the main input.
+st.sidebar.markdown('<div class="card-label">Dataset</div>', unsafe_allow_html=True)
+data_source_opt = st.sidebar.radio(
+    "Source", ["ISRO benchmark sample", "Upload CSV"], label_visibility="collapsed"
+)
+_slot_upload = st.sidebar.container()
+
+st.sidebar.markdown('<div class="card-label sec">Screening configuration</div>', unsafe_allow_html=True)
+z_thresh = st.sidebar.slider("Peer anomaly threshold |Z|", 1.5, 5.0,
+                             float(ROBUST_Z_SCORE_THRESHOLD), 0.1,
+                             help="Robust median/MAD Z against the part's own lot. "
+                                  "REVIEW at |Z| >= this; FLAG at |Z| >= this + 1.")
+safety_ratio = st.sidebar.slider("Safety margin (% of limit)", 50, 95,
+                                 int(SAFETY_SLOPE_MARGIN_RATIO * 100), 5) / 100.0
+
+# Filled after the pipeline runs — containers hold their position in the
+# sidebar regardless of when they are written to.
+# ONE slot for both context blocks. Two adjacent st.markdown containers let
+# the second ride 6px up into the first: Streamlit's markdown wrapper reported
+# 110px around 126px of content, and no amount of flex-shrink guarding on the
+# anonymous wrapper divs fixed it reliably. Rendering both blocks in a single
+# markdown call removes the boundary rather than fighting it.
+_slot_context = st.sidebar.container()
+
+sign_off = st.sidebar.button(
+    "Commit run to audit trail", width="stretch",
+    help="Records this run with the thresholds above. Screening objective is to "
+         "minimise false negatives: a defective component released to flight is "
+         "far costlier than a good one held back.",
+)
+
 
 # Load / Select Dataset
 @st.cache_data
@@ -1089,10 +1196,12 @@ with tab5:
                    "**Commit run to audit trail** in the sidebar to record one.")
 
 # Footer
-st.markdown("---")
+# The old footer repeated "Astra Screen · ISRO PS-26170" when the masthead
+# subtitle already ends in PS-26170 — the same identifier twice on one page.
+# What a footer can usefully carry here is the run's provenance instead.
 st.markdown(
-    "<div style='text-align: center; opacity: 0.55; font-size: 0.85rem;'>"
-    "Astra Screen &middot; ISRO PS-26170"
-    "</div>",
+    f'<div class="footer-note">Decisions above were produced at '
+    f'|Z| &ge; {z_thresh:.1f}, safety margin {safety_ratio:.0%} of the datasheet '
+    f'limit. Commit a run to record them in the audit trail.</div>',
     unsafe_allow_html=True
 )
