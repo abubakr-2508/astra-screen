@@ -104,6 +104,15 @@ st.markdown("""
         width: calc(100% + 2 * var(--gut));
         max-width: none;
     }
+    /* Streamlit sets `margin-bottom: -16px` on stMarkdownContainer to cancel a
+       trailing <p>'s own margin. The rows in this band are divs with their own
+       padding, so there is no <p> margin to cancel and the negative one simply
+       made the wrapper measure 16px shorter than its contents: the wrapper
+       reported 31px around 47px, the band sized to the wrapper, and the run
+       state overflowed 15px past the band's own bottom rule — the border cut
+       through the text. Cancelled inside the masthead only; elsewhere the
+       compensation is doing its job. */
+    .st-key-masthead [data-testid="stMarkdownContainer"] { margin-bottom: 0; }
 
     /* No `color` here on purpose. Streamlit exposes no theme CSS variables, so a
        hardcoded colour is wrong in one of the two schemes: #1E293B scored 1.16:1
@@ -547,6 +556,15 @@ st.markdown("""
        shell at rest and only shows a surface when the cursor is on it. Scoped
        by the `st-key-` class the frontend emits for keyed widgets, so the other
        three buttons keep their normal treatment. */
+    /* Right-aligning has to happen on the COLUMN's vertical block, not on the
+       keyed element container: with width="content" that container shrink-wraps
+       to the button (measured 120px inside a 218px column), so justify-content
+       on it had nothing left to distribute. The vertical block is a column
+       flex, so the cross-axis property is align-items. */
+    .st-key-masthead [data-testid="stHorizontalBlock"]
+        > [data-testid="stColumn"]:last-child [data-testid="stVerticalBlock"] {
+        align-items: flex-end;
+    }
     .st-key-theme_toggle [data-testid="stBaseButton-secondary"] {
         background: transparent;
         border-color: transparent;
@@ -632,7 +650,7 @@ _icon = ":material/light_mode:" if _dark_now else ":material/dark_mode:"
 # header information, and it was previously a second floating strip.
 _masthead = st.container(key="masthead")
 with _masthead:
-    _h_left, _h_right = st.columns([5, 1], vertical_alignment="center")
+    _h_left, _h_right = st.columns([4, 1], vertical_alignment="center")
     with _h_left:
         st.markdown(
             lockup(
@@ -647,7 +665,15 @@ with _masthead:
         # key= gives the container an `st-key-theme_toggle` class (emitted by
         # the frontend, verified in the 1.63 bundle), which is how the CSS
         # strips this one button back to chrome without touching the others.
-        if st.button(f"{_target} theme", icon=_icon, width="stretch",
+        # width="content", not "stretch": stretched to the column the label
+        # div measured clientWidth 69 against scrollWidth 70 and Streamlit's
+        # ellipsis truncated it to "Light the..." — sized to its content it
+        # cannot clip, and the CSS right-aligns it in the column instead.
+        # Label is the target word alone. "Light theme" measured 120px against
+        # a 113px column at 1024 wide and Streamlit's ellipsis cut it to
+        # "Light the..."; beside a sun/moon icon the word "theme" was carrying
+        # nothing anyway, and the tooltip states it in full.
+        if st.button(_target, icon=_icon, width="content",
                      key="theme_toggle",
                      help=f"Switch to the {_target.lower()} theme. "
                           "Defaults to following your system setting."):
