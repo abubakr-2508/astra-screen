@@ -46,16 +46,21 @@ def mark_svg(size: int = 44) -> str:
     )
 
 
-def lockup(title: str, subtitle: str, size: int = 44) -> str:
-    """Mark + title + subtitle as one aligned unit.
+def lockup(title: str, subtitle: str, badge: str = "", size: int = 44) -> str:
+    """Mark + title (+ identifier badge) + subtitle as one aligned unit.
 
     Replaces two stacked text divs that floated with nothing anchoring them —
     the measured cause of "the product name doesn't announce itself".
+
+    `badge` carries an identifier rather than a description — the problem ID
+    used to sit at the end of the subtitle, where it was both the wrong kind
+    of information for that line and the reason the line wrapped.
     """
+    badge_html = f'<span class="lockup-badge">{badge}</span>' if badge else ""
     return (
         f'<div class="lockup-head">{mark_svg(size)}'
         f'<div class="lockup-txt">'
-        f'<div class="main-header">{title}</div>'
+        f'<div class="main-header">{title}{badge_html}</div>'
         f'<div class="sub-header">{subtitle}</div>'
         f'</div></div>'
     )

@@ -63,11 +63,46 @@ st.markdown("""
     [data-testid="stAppDeployButton"],
     [data-testid="stMainMenu"] { display: none; }
     [data-testid="stExpandSidebarButton"] { pointer-events: auto; }
+    /* The horizontal gutter is declared here as a variable rather than left to
+       Streamlit's emotion class, because the masthead below has to cancel it
+       exactly to reach the full width of the main area. Both read --gut, so
+       they can never drift apart, and the media query moves them together. */
     .stMainBlockContainer {
-        padding-top: 1.75rem;
-        padding-bottom: 3rem;
+        --gut: 80px;
+        padding: 1.75rem var(--gut) 3rem;
         max-width: 1700px;
         margin: 0 auto;
+    }
+    @media (max-width: 1200px) { .stMainBlockContainer { --gut: 40px; } }
+
+    /* --- the masthead band ---
+       A header has to be a SURFACE, not text that happens to sit at the top.
+       It takes the same ground as the sidebar, so every piece of chrome in the
+       app is one material and the content sits on a different one. Pulled out
+       by the gutter on both sides and up by the container's own top padding,
+       so it spans the full width of the main area and starts flush at the top;
+       the padding puts its contents back exactly where they were. */
+    .st-key-masthead {
+        /* Raised, not surface-2. Matching the sidebar's ground measured 1.04:1
+           against the page in light — a step that exists arithmetically and not
+           perceptually, so the band simply did not read as a band. Raised runs
+           the other way: lighter than the page in light, a clear step up from it
+           in dark, which is what an elevated bar looks like in both. The
+           elevation token then does the separating, the way a real app header
+           casts onto the content beneath it rather than relying on hue. */
+        background: var(--astra-raised);
+        box-shadow: var(--astra-elevation);
+        border-bottom: 1px solid var(--astra-rule);
+        margin: -1.75rem calc(-1 * var(--gut)) 1.5rem;
+        padding: 1.75rem var(--gut) 0;
+        /* Negative margins alone are not enough here. Streamlit gives the block
+           `width: 100%; max-width: 100%` and `flex: 1 1 0%`, so the negative
+           margins shifted the band left without widening it — it started in the
+           right place and stopped 160px short. The width has to be reclaimed
+           explicitly, and the flex basis released, or the basis wins. */
+        flex: 0 0 auto;
+        width: calc(100% + 2 * var(--gut));
+        max-width: none;
     }
 
     /* No `color` here on purpose. Streamlit exposes no theme CSS variables, so a
@@ -83,6 +118,28 @@ st.markdown("""
     }
     .lockup-head .mark { flex: none; display: block; border-radius: var(--astra-radius); }
     .lockup-txt { min-width: 0; }
+
+    /* The problem ID is an IDENTIFIER, not part of the description. Sitting at
+       the end of the subtitle it was both the wrong kind of information for
+       that line and the reason the line wrapped. As a chip beside the wordmark
+       it reads the way a version or build tag does on a product header. */
+    .lockup-badge {
+        display: inline-block;
+        vertical-align: middle;
+        position: relative;
+        top: -0.20em;
+        margin-left: 0.65rem;
+        padding: 3px 7px 2px;
+        border: 1px solid var(--astra-rule);
+        border-radius: 4px;
+        background: var(--astra-raised);
+        font-family: ui-monospace, "Cascadia Mono", Consolas, "SF Mono", monospace;
+        font-size: 0.60rem;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        line-height: 1.2;
+        color: var(--astra-muted);
+    }
 
     /* A wordmark, not a heading. At 2.2rem/-0.022em this was the same species
        as the section h3s (1.75rem) and only 1.26x their size, which is why it
@@ -164,10 +221,12 @@ st.markdown("""
         box-shadow: inset 0 -2px 0 0 var(--astra-accent);
     }
     [data-testid="stTabPanel"] { padding-top: 0.85rem; }
+    /* max-width was 78ch = 558px, inside a 934px column — so the line broke
+       with 376px of clear room beside it, orphaning the last clause and leaving
+       a dangling separator. It is a one-line descriptor, not body prose. */
     .sub-header {
         font-size: 0.9rem;
         opacity: 0.62;
-        max-width: 78ch;
         margin-bottom: 0;
     }
 
@@ -184,13 +243,12 @@ st.markdown("""
         letter-spacing: 0.10em;
         text-transform: uppercase;
         opacity: 0.60;
-        padding: 7px 0 9px;
-        /* Only a bottom rule. With a border above as well the strip read as a
-           separate band floating under the title; with one rule beneath, the
-           lockup and the run state close as a single masthead. */
-        border-bottom: 1px solid currentColor;
-        border-color: color-mix(in srgb, currentColor 16%, transparent);
-        margin-bottom: 1.35rem;
+        padding: 9px 0 11px;
+        /* Inside the band now, so this rule separates identity from run state
+           rather than closing anything — the band's own border does that. */
+        border-top: 1px solid currentColor;
+        border-color: color-mix(in srgb, currentColor 14%, transparent);
+        margin: 0.55rem 0 0;
     }
     .provenance .hint { opacity: 0.65; letter-spacing: 0.04em; }
     .provenance .unit { text-transform: none; }
@@ -567,26 +625,38 @@ _icon = ":material/light_mode:" if _dark_now else ":material/dark_mode:"
 # biggest heading on the page" rather than "the application". It is now tighter
 # and smaller while the headings shrink further, and the row carries chrome on
 # the right, closed by the provenance rule below.
-_h_left, _h_right = st.columns([5, 1], vertical_alignment="center")
-with _h_left:
-    st.markdown(
-        lockup(
-            "Astra Screen",
-            "Component burn-in screening &middot; peer-relative anomaly detection "
-            "&amp; 168&#8201;h drift prediction &middot; ISRO PS-26170",
-        ),
-        unsafe_allow_html=True,
-    )
-with _h_right:
-    # key= gives the container an `st-key-theme_toggle` class (emitted by the
-    # frontend, verified in the 1.63 bundle), which is how the CSS below strips
-    # this one button back to chrome without touching the other three.
-    if st.button(f"{_target} theme", icon=_icon, width="stretch",
-                 key="theme_toggle",
-                 help=f"Switch to the {_target.lower()} theme. "
-                      "Defaults to following your system setting."):
-        st.session_state["_theme_apply"] = _target
-        st.rerun()
+# One bounded band so the header IS chrome rather than text that happens to be
+# at the top: its own surface (the same one the sidebar uses, so all chrome is
+# one material), pulled out to the full width of the main area, closed by a
+# rule. The provenance row lives inside it — it describes the run, which is
+# header information, and it was previously a second floating strip.
+_masthead = st.container(key="masthead")
+with _masthead:
+    _h_left, _h_right = st.columns([5, 1], vertical_alignment="center")
+    with _h_left:
+        st.markdown(
+            lockup(
+                "Astra Screen",
+                "Component burn-in screening &middot; peer-relative anomaly "
+                "detection &amp; 168&#8201;h drift prediction",
+                badge="ISRO PS-26170",
+            ),
+            unsafe_allow_html=True,
+        )
+    with _h_right:
+        # key= gives the container an `st-key-theme_toggle` class (emitted by
+        # the frontend, verified in the 1.63 bundle), which is how the CSS
+        # strips this one button back to chrome without touching the others.
+        if st.button(f"{_target} theme", icon=_icon, width="stretch",
+                     key="theme_toggle",
+                     help=f"Switch to the {_target.lower()} theme. "
+                          "Defaults to following your system setting."):
+            st.session_state["_theme_apply"] = _target
+            st.rerun()
+
+    # Reserved here, filled after the pipeline runs — the run facts do not
+    # exist yet, but their position in the band does.
+    _slot_provenance = st.empty()
 
 # Sidebar Configuration.
 # No brand lockup here: the header lockup (Step 11) already identifies the app,
@@ -792,9 +862,10 @@ else:
 _mae_txt = (f"{perf['mae']:g}&nbsp;{unit}".strip()
             if perf.get("has_ground_truth") and perf.get("mae") is not None else "n/a")
 
-st.markdown(
+# "ASTRA SCREEN" led this strip while the wordmark said the same thing 14px
+# above it. Dropped.
+_slot_provenance.markdown(
     f'<div class="provenance">'
-    f'<span class="sys">ASTRA SCREEN</span><span class="sep"></span>'
     f'<span>{_ts}</span><span class="sep"></span>'
     f'<span>{dataset_name.upper()}</span><span class="sep"></span>'
     f'<span>N&nbsp;=&nbsp;{total_count}</span><span class="sep"></span>'
